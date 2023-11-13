@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { JwtGuard } from './guard/jwt.guard';
 import { GoogleGuard } from './guard/google.guard';
 import { Request, Response } from 'express';
+import * as process from 'process';
 
 @Controller('auth')
 export class AuthController {
@@ -37,7 +38,8 @@ export class AuthController {
   @UseGuards(GoogleGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const token = await this.authService.signInOAuth(req.user);
-    res.redirect('https://google.com');
+    res.cookie('access_token', token);
+    res.redirect(process.env.FRONTEND_URL);
   }
 
   @Get('me')

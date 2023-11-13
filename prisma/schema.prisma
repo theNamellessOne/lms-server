@@ -6,12 +6,111 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String?
+  id Int @id @default(autoincrement())
+
+  email     String  @unique
+  firstName String
+  lastName  String?
+  avatarUrl String?
+  password  String?
+
+  isTeacher Boolean @default(false)
+
+  courses            Course[]
+  purchases          Purchase[]
+  course_progressess Progress[]
+}
+
+model Course {
+  id    Int    @id @default(autoincrement())
+  price Float?
+
+  title       String
+  imageUrl    String?
+  description String?
+
+  isPublished Boolean @default(false)
+
+  author   User @relation(fields: [authorId], references: [id])
+  authorId Int
+
+  category   Category? @relation(references: [id], fields: [categoryId])
+  categoryId Int?
+
+  purchased_by Purchase[]
+  attachments  Attachment[]
+  chapters     Chapter[]
+
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model Purchase {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
+
+  @@id([courseId, userId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  Course Course[]
+}
+
+model Progress {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  chapter   Chapter @relation(fields: [chapterId], references: [id])
+  chapterId Int
+
+  isCompleted Boolean @default(false)
+
+  @@id([userId, chapterId])
+  @@index([userId])
+  @@index([chapterId])
+}
+
+model Attachment {
+  id Int @id @default(autoincrement())
+
+  url  String
+  name String
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
+
+  @@index([courseId])
+}
+
+model Chapter {
+  id       Int @id @default(autoincrement())
+  position Int
+
+  title       String
+  videoUrl    String
+  description String
+
+  isFree      Boolean @default(false)
+  isPublished Boolean @default(false)
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
+
+  progressess Progress[]
+
+  @@index([courseId])
 }

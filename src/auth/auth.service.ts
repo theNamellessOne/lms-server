@@ -3,15 +3,17 @@ import { UserService } from '../user/user.service';
 import { UserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private prismaService: PrismaService,
     private userService: UserService,
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(userDto: UserDto) {
+  async validateUser(userDto: { email: string; password: string }) {
     const user = await this.userService.findOne(userDto.email);
     if (user && (await bcrypt.compare(userDto.password, user.password))) {
       const { password, ...result } = user;
@@ -27,7 +29,7 @@ export class AuthService {
     });
   }
 
-  async signInOAuth(userData) {
+  async signInOAuth(userData: any) {
     const user = await this.userService.findOne(userData.email);
 
     if (!user) {
@@ -53,7 +55,23 @@ export class AuthService {
     });
   }
 
+  async isAuthor(userId: number, courseId: number) {
+    const course = await this.prismaService.course.findUnique({
+      where: { id: courseId },
+    });
+
+    return userId === course.authorId;
+  }
+
+  async hasPurchased(userId: number, courseId: number) {
+    return !!(await this.prismaService.purchase.findUnique({
+      where: {
+        courseId_userId: { userId, courseId },
+      },
+    }));
+  }
+
   private generateJwt(payload: any) {
-    return { access_token: this.jwtService.sign(payload) };
+    return this.jwtService.sign(payload);
   }
 }

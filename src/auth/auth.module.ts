@@ -8,16 +8,19 @@ import { JwtModule } from '@nestjs/jwt';
 import * as process from 'process';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { GoogleStrategy } from './strategy/google.strategy';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [
     UserModule,
+    PrismaModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.SECRET_JWT,
       signOptions: { expiresIn: '7d' },
     }),
   ],
+  exports: [AuthService],
   providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
 })
